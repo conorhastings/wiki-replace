@@ -31,7 +31,9 @@ function wikiReplace(event, context, callback) {
         if (elem.attribs.src.indexOf(word) !== -1) {
           const regex = new RegExp(word, 'gi');
           elem.attribs.src = elem.attribs.src.replace(regex, find[i] || '');
-          elem.attribs.srcset = elem.attribs.srcset.replace(regex, find[i] || '');
+          if (elem.attribs.srcset) {
+            elem.attribs.srcset = elem.attribs.srcset.replace(regex, find[i] || '');
+          }
         }
         return elem;
       });
