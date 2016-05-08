@@ -1,0 +1,17 @@
+{
+  "name": "wiki",
+  "version": "1.0.0",
+  "description": "",
+  "main": "wiki.js",
+  "dependencies": {
+    "axios": "^0.11.0",
+    "cheerio": "^0.20.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "build": "zip ./wiki.zip -r $(ls -ap1 | command grep -v /) node_modules/{axios,cheerio}"
+
+  },
+  "author": "",
+  "license": "ISC"
+}
