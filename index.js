@@ -1,6 +1,16 @@
 const request = require('axios');
-const fs = require('fs');
 const cheerio = require('cheerio');
+
+function isUpperCase(word) {
+  return word[0].toUpperCase() === word[0];
+}
+
+function transformCase(word) {
+  if (isUpperCase(word)) {
+    return word.toLowerCase();
+  }
+  return word[0].toUpperCase() + word.substring(1);
+}
 
 function wikiReplace(event, context, callback) {
   console.log('Received event:', JSON.stringify(event, null, 2));
@@ -15,8 +25,9 @@ function wikiReplace(event, context, callback) {
   request(url).then(res => {
     const replaced = find.reduce((output, word, i) => {
       const replacer = replace[i] || '';
-      const regex = new RegExp(word, 'gi');
-      output = output.replace(regex, replacer);
+      const regex = new RegExp(word, 'g');
+      const alternateRegex = new RegExp(transformCase(word), 'g');
+      output = output.replace(regex, replacer).replace(alternateRegex, transformCase(replacer));
       return output;
     }, res.data);
     const html = cheerio.load(replaced);
@@ -28,11 +39,12 @@ function wikiReplace(event, context, callback) {
     });
     html('img').map((i, elem) => {
       replace.forEach((word, i) => {
-        if (elem.attribs.src.indexOf(word) !== -1) {
-          const regex = new RegExp(word, 'gi');
-          elem.attribs.src = elem.attribs.src.replace(regex, find[i] || '');
+        if (elem.attribs.src.indexOf(word) !== -1 || elem.attribs.src.indexOf(transformCase(word)) !== -1) {
+          const regex = new RegExp(word, 'g');
+          const alternateRegex = new RegExp(transformCase(word), 'g');
+          elem.attribs.src = elem.attribs.src.replace(regex, find[i] || '').replace(alternateRegex, transformCase(find[i] || ''));
           if (elem.attribs.srcset) {
-            elem.attribs.srcset = elem.attribs.srcset.replace(regex, find[i] || '');
+            elem.attribs.srcset = elem.attribs.srcset.replace(regex, find[i] || '').replace(alternateRegex, transformCase(find[i] || '')); 
           }
         }
         return elem;
@@ -43,3 +55,4 @@ function wikiReplace(event, context, callback) {
 }
 
 exports.handler = wikiReplace;
+
