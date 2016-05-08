@@ -1,5 +1,6 @@
 const request = require('axios');
 const cheerio = require('cheerio');
+const base64 = require('base64-url');
 
 function isUpperCase(word) {
   return word[0].toUpperCase() === word[0];
@@ -12,10 +13,33 @@ function transformCase(word) {
   return word[0].toUpperCase() + word.substring(1);
 }
 
+function isBase64(word) {
+  const regex = /^([0-9a-zA-Z+\/]{4})*(([0-9a-zA-Z+\/]{2}==)|([0-9a-zA-Z+\/]{3}=))?$/;
+  return regex.test(word);
+} 
+
+function hasQueryString(event) {
+  return !!(event && event.params && event.params.querystring);
+}
+
+function getQueryStringArray(event, type) {
+  return (
+    hasQueryString(event)
+    && event.params.querystring[type[0]] ? 
+    event.params.querystring[type[0]].split(',') :
+    []
+  ).map(word => {
+    if (isBase64(base64.unescape(word))) {
+      return base64.decode(word);
+    }
+    return word;
+  })
+}
+
 function wikiReplace(event, context, callback) {
   console.log('Received event:', JSON.stringify(event, null, 2));
-  const find = event.params && event.params.querystring && event.params.querystring.f ? event.params.querystring.f.split(',') : [];
-  const replace = event.params && event.params.querystring && event.params.querystring.r ? event.params.querystring.r.split(',') : [];
+  const find = getQueryStringArray(event, 'find');
+  const replace = getQueryStringArray(event, 'replace');
   const startingUrl = `https://en.wikipedia.org/wiki/${event.params.path.page}`
   const url = replace.reduce((final, word, i) => {
     const regex = new RegExp(word, 'gi');
