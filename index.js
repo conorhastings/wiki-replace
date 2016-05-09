@@ -13,23 +13,19 @@ function transformCase(word) {
   return word[0].toUpperCase() + word.substring(1);
 }
 
-function isBase64(word) {
-  const regex = /^([0-9a-zA-Z+\/]{4})*(([0-9a-zA-Z+\/]{2}==)|([0-9a-zA-Z+\/]{3}=))?$/;
-  return regex.test(word);
-} 
-
 function hasQueryString(event) {
   return !!(event && event.params && event.params.querystring);
 }
 
 function getQueryStringArray(event, type) {
+  const hasQuery = hasQueryString(event);
   return (
-    hasQueryString(event)
-    && event.params.querystring[type[0]] ? 
+    hasQuery &&
+    event.params.querystring[type[0]] ? 
     event.params.querystring[type[0]].split(',') :
     []
   ).map(word => {
-    if (isBase64(base64.unescape(word))) {
+    if (hasQuery && event.params.querystring["b64"]) {
       return base64.decode(word);
     }
     return word;
